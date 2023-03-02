@@ -6,3 +6,8 @@ Some interesting examples are mentions of 'Higgs' or 'Navier-Stokes'.
 In order to run the functions, you first need to generate the words-by-year.json file.  The code to do this is dict_gen.py.
 Then you can run the main.py.  The functions are defined in functions.py.  That document contains some extra functions I was working on,
 and my use in the future.  The main function used is make_relative_word_graph.
+
+-------------------------------------------------------------------------------------------------------------------
+
+2nd commit: the new model.py has a practice NN which classifies papers into its subject in the arxiv taxonomy by its title.
+It is entirely self contained, so try it out!  You can run each block of code in console or all at once if you prefer.

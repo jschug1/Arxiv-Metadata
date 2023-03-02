@@ -674,3 +674,23 @@ def make_relative_word_graph(word):
     plt.show()
 
     return years, count
+
+def find_category(paper):
+
+    category = paper['categories']
+    category = category.split(' ')
+    label = 9
+    for subcat in category:
+        initial = subcat[:3]
+        if initial in reverse_category_dict.keys():
+            label = reverse_category_dict[initial]
+            break
+
+    return label
+
+category_dict = {1: ['cs'], 2: ['econ'], 3: ['eess'], 4: ['math'],
+                 5: ['astro-ph', 'cond-mat', 'gr-qc', 'hep', 'nlin', 'nucl', 'physics', 'quant'],
+                 6: ['q-bio'], 7: ['qfin'], 8: ['stat']}
+reverse_category_dict = {'cs.': 1, 'eco': 2, 'ees': 3, 'mat': 4,
+                 'ast': 5, 'con': 5, 'gr-': 5, 'hep': 5, 'nli': 5, 'nuc': 5, 'phy': 5, 'qua': 5,
+                 'q-b': 6, 'q-f': 7, 'sta': 8}
