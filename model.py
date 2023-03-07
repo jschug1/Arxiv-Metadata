@@ -19,6 +19,7 @@
 # dictionaries tokenizing the categories to integers.
 # the first two dictionaries take the categories from the arxiv metadata and associate them to integers
 # the last one is for the prediction output.
+
 category_dict = {0: ['cs'], 1: ['econ'], 2: ['eess'], 3: ['math'],
                  4: ['astro-ph', 'cond-mat', 'gr-qc', 'hep', 'nlin', 'nucl', 'physics', 'quant'],
                  5: ['q-bio'], 6: ['qfin'], 7: ['stat']}
@@ -62,6 +63,7 @@ def find_category(paper):
 ########################################################################################
 
 def word_list(str):
+
     str = remove_latex_eqns(str)
     chars_to_remove = ['(', ')', '.', ',']
 
@@ -85,11 +87,35 @@ def word_list(str):
 
     return words
 
+def remove_latex_eqns(str):
+    dolla = -1
+    eqn = 0
+    newstr = ''
+    for letter in str:
+        if letter == '$':
+            dolla = -1 * dolla
+            continue
+        if letter == '[' and dolla == -1:
+            eqn += 1
+            continue
+        if dolla == -1:
+            if eqn == 0:
+                newstr += letter
+        if letter == ']':
+            eqn = eqn - 1
+            continue
+        # print(f'letter = {letter}')
+        # print(f'dolla = {dolla}')
+        # print(f'eqn = {eqn}')
+
+    return newstr
+
 ########################################################################################
 # Now we can define a function which creates the data set with desired parameters listed above.
 ########################################################################################
 
 def make_datasets():
+
     type_num = [0, 0, 0, 0, 0, 0, 0, 0] # keeps track of the number of papers of each topic in the loop
     training_papers = []
     validation_papers = []
@@ -107,6 +133,8 @@ def make_datasets():
             training_papers.append(paper)
         if type_num[topic] > 4000 and type_num[topic] <= 5000: # takes the next 1000 and puts them into validation
             validation_papers.append(paper)
+        if min(type_num) == 5000:
+            break
         index += 1
 
     all_papers = training_papers + validation_papers # all 40000 papers
@@ -159,6 +187,8 @@ def make_datasets():
 ########################################################################################
 # Now to instantiate the make data function
 ########################################################################################
+
+import json
 
 training_data, training_labels, validation_data, validation_labels, token_dict, reverse_dict = make_datasets()
 all_data = training_data + validation_data
@@ -215,6 +245,8 @@ def pad_sequences(train_data, valid_data):
 # Now we can pad the training and validation data sequences as well as convert the labels into numpy arrays.
 ########################################################################################
 
+import numpy as np
+
 training_data, validation_data, maxlen = pad_sequences(training_data, validation_data)
 
 training_labels = np.array(training_labels)
@@ -224,10 +256,7 @@ validation_labels = np.array(validation_labels)
 # Now we can create the model.
 ########################################################################################
 
-import random
-
 import tensorflow as tf
-import numpy as np
 
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Embedding, LSTM, Dense, Bidirectional
@@ -242,20 +271,19 @@ from tensorflow.keras.optimizers import Adam
 buffer_size = 10000
 batch_size = 32
 embedding_dim = 64
-vocab_size = len(token_dict)
+vocab_size = len(token_dict)+1
 epochs = 5
 
 ########################################################################################
 # Now we can make the model.
 ########################################################################################
 
-
 model = tf.keras.Sequential([
-    tf.keras.layers.Embedding(vocab_size+1, embedding_dim, input_length=maxlen+1),
-    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Embedding(vocab_size, embedding_dim, input_length=maxlen+1),
+    tf.keras.layers.SpatialDropout1D(0.1),
     tf.keras.layers.GlobalAveragePooling1D(),
-    tf.keras.layers.Dense(6, activation='relu'),
-    tf.keras.layers.Dense(9, activation='softmax')
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(8, activation='softmax')
 ])
 
 model.summary()
@@ -284,6 +312,8 @@ loss = history.history['loss']
 val_loss = history.history['val_loss']
 
 epochs = range(len(acc))
+
+import matplotlib.pyplot as plt
 
 plt.plot(epochs, acc, 'r', label='Training accuracy')
 plt.plot(epochs, val_acc, 'b', label='Validation accuracy')
@@ -317,16 +347,23 @@ def title_to_topic(model, str):
     title = np.transpose(tf.expand_dims(ttemp, axis=-1))
     classes = model.predict(title, batch_size=10, verbose=0)
     classes = classes[0]
+    print(f'topic: {np.argmax(classes)}')
     topic = topic_converter(np.argmax(classes)) # predicts based on max probability
     percentage = classes[np.argmax(classes)]*100
 
     return topic, percentage
 
 def topic_converter(integer):
-    category_dict = {1: 'cs', 2: 'econ', 3: 'eess', 4: 'math',
-                     5: 'physics',
-                     6: 'q-bio', 7: 'qfin', 8: 'stat'}
+    category_dict = {0: 'cs', 1: 'econ', 2: 'eess', 3: 'math',
+                     4: 'physics',
+                     5: 'q-bio', 6: 'qfin', 7: 'stat'}
     return topic_dict[integer]
+
+def reverse_topic_converter(subject):
+    reverse_cat_dict = {'cs': 0, 'econ': 1, 'eess': 2, 'math': 3,
+                        'physics': 4, 'q-bio': 5, 'qfin': 6,
+                        'stat': 7}
+    return reverse_cat_dict[subject]
 
 ########################################################################################
 # Give it a shot! It will also print the probability from the softmax layer at the end.
@@ -334,6 +371,17 @@ def topic_converter(integer):
 
 topic = title_to_topic(model, "Confluence of the K-theoretic I-function for Calabi-Yau manifolds and an Application to the Integrality of the Mirror Map")
 print(topic)
+
+########################################################################################
+# The validation accuracy was only around 72% for this model.  Future versions will have improved models.
+########################################################################################
+
+
+
+
+
+
+
 
 
 
