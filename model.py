@@ -720,7 +720,7 @@ print(guess)
 # Perhaps more layers being added would help with situations like this.
 #
 # 3) This is just an inherently difficult problem with really noisy labels and vague titles from the metadata.
-# Ultimately maybe many paper authors don't bother to cross label their papers even though a human reader
+# Ultimately maybe many paper authors don't cross label their papers even though a human reader
 # may mistake them for papers from a different field.
 # I would expect better results from the paper abstracts, but I wanted to see how far I could get with titles,
 # since they were shorter, so analysis would be faster.
